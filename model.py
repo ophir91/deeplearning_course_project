@@ -163,35 +163,7 @@ class model:
         :param outputs: the net output, a 5 dim tensor shape: [batch, channels, z, x, y]
         :return: add images to tensorboard
         """
-        if len(inputs.shape) == 5:
-            for j in range(len(inputs[0, 0, :, 0, 0])):
-                if j % 5 == 0:
-                    outputs_b = (outputs > 0.5).float() * 1
-                    self.writer.add_image('epoch ' + str(self.epoch) + '/Input',
-                                          torch.round(inputs[0, 0, j, :, :]*255), j)  # [batch, channels, z, x, y]
-                    self.writer.add_image('epoch ' + str(self.epoch) + '/GT_f',
-                                          torch.round(labels[0, 0, j, :, :]), j)  # [batch, channels, z, x, y]
-                    self.writer.add_image('epoch ' + str(self.epoch) + '/GT_b',
-                                          torch.round(labels[0, 1, j, :, :]), j)  # [batch, channels, z, x, y]
-                    self.writer.add_image('epoch ' + str(self.epoch) + '/output_f',
-                                          torch.round(outputs_b[0, 0, j, :, :]), j)  # [batch, channels, z, x, y]
-                    self.writer.add_image('epoch ' + str(self.epoch) + '/output_b',
-                                          torch.round(outputs_b[0, 1, j, :, :]), j)  # [batch, channels, z, x, y]
-        elif len(inputs.shape) == 4:
-            self.writer.add_image('epoch ' + str(self.epoch) + '/Input',
-                                  torch.round(inputs[0, 0,:, :] * 255))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/GT_0',
-                                  torch.round(labels[0, 0,:, :]))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/GT_1',
-                                  torch.round(labels[0, 1,:, :]))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/GT_2',
-                                  torch.round(labels[0, 2,:, :]))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/output_0',
-                                  torch.round(outputs[0, 0,:, :]))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/output_1',
-                                  torch.round(outputs[0, 1,:, :]))  # [batch, channels, x, y]
-            self.writer.add_image('epoch ' + str(self.epoch) + '/output_2',
-                                  torch.round(outputs[0, 2,:, :]))  # [batch, channels, x, y]
+
 
     def test_validation(self, validationloader=None):
         validation_accuracy = None
