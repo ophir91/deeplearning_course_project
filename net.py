@@ -22,7 +22,7 @@ class ClassifaierAndDenoise(nn.Module):
         c = self.classifier(mfcc)
         d = torch.zeros(mfcc.shape[0], self.M, 257)
         for i, one_denoise in enumerate(self.MDenoise):
-            d[:,i:i+1,:] = one_denoise(stft) * c[..., i].unsqueeze(1)
+            d[:, i:i+1, :] = one_denoise(stft) * c[..., i].unsqueeze(1)
 
         return torch.sum(d, dim=1).unsqueeze(1)
 

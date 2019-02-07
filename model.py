@@ -68,8 +68,8 @@ class model:
             self.optimizer = getattr(optim, optimizer_name)(self.model.parameters(), lr=lr, momentum=0.9)
         else:
             self.optimizer = getattr(optim, optimizer_name)(self.model.parameters(), lr=lr)
-        if accuracy_name == 'MyMse':
-            self.accuracy = MyMse
+        if accuracy_name == 'argmax':
+            self.accuracy = argmax
         elif accuracy_name != '':
             self.accuracy = getattr(nn, accuracy_name)()
             # self.accuracy = getattr(self.package_name, accuracy_name)()
@@ -181,8 +181,9 @@ class model:
 
                     # wrap them in Variable
                     if torch.cuda.is_available():
-                        valid_mfcc,valid_stft, valid_labels = Variable(valid_mfcc.cuda()), Variable(valid_stft.cuda()),\
-                                                     Variable(valid_labels.cuda())
+                        valid_mfcc,valid_stft, valid_labels = Variable(valid_mfcc.cuda()).float(),\
+                                                              Variable(valid_stft.cuda()).float(),\
+                                                              Variable(valid_labels.cuda()).float()
                     else:
                         valid_mfcc,valid_stft, valid_labels = Variable(valid_mfcc), Variable(valid_stft), \
                                                      Variable(valid_labels)
@@ -212,7 +213,7 @@ class model:
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
-                    mfcc, stft, labels = Variable(mfcc.cuda()), Variable(stft.cuda()), Variable(labels.cuda())
+                    mfcc, stft, labels = Variable(mfcc.cuda()).float(), Variable(stft.cuda()).float(), Variable(labels.cuda()).float()
                 else:
                     mfcc, stft, labels = Variable(mfcc), Variable(stft), Variable(labels)
 
@@ -243,6 +244,10 @@ class model:
 
 def MyMse(outputs, labels):
     return torch.sqrt(torch.sum((outputs-labels)**2))
+
+def argmax(predict, labels): #TODO: not working yet.. need to change it
+    pred = predict.data.max(1)[1].long()
+    return float(pred.eq(labels.data.view_as(pred).long()).sum()) / float(pred.shape[0])
 
 if __name__ == '__main__':
 
