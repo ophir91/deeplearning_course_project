@@ -70,6 +70,8 @@ class model:
             self.optimizer = getattr(optim, optimizer_name)(self.model.parameters(), lr=lr)
         if accuracy_name == 'argmax':
             self.accuracy = argmax
+        elif accuracy_name == 'count_success':
+            self.accuracy = count_success
         elif accuracy_name != '':
             self.accuracy = getattr(nn, accuracy_name)()
             # self.accuracy = getattr(self.package_name, accuracy_name)()
@@ -98,8 +100,9 @@ class model:
         old_filename = '{checkpoint_name}_{epoch_num}_{optimizer}_{loss_name}.pth.tar'\
             .format(checkpoint_name=self.checkpoint_name, epoch_num=self.epoch-epochs_per_save,
                     optimizer=self.optimizer_name, loss_name=self.loss)
-        if os.path.exists(os.path.join(save_dir, old_filename)):
-            os.remove(os.path.join(save_dir, old_filename))
+        #TODO check it
+        # if os.path.exists(os.path.join(save_dir, old_filename)):
+        #     os.remove(os.path.join(save_dir, old_filename))
 
     def load_checkpoint(self, filename, args):
         """
@@ -173,9 +176,9 @@ class model:
             with torch.no_grad():
                 for k, sample in enumerate(validationloader, 0):
                     if isinstance(sample, dict):
-                        valid_mfcc = sample['mfcc']
-                        valid_stft = sample['stft']
-                        valid_labels = sample['ground_truth']
+                        valid_mfcc = sample['mfcc'].reshape(-1, 1, 351)
+                        valid_stft = sample['stft'].reshape(-1, 1, 2313)
+                        valid_labels = sample['ground_truth'].reshape(-1, 1, 257)
                     else:
                         valid_mfcc, valid_stft, valid_labels = sample
 
@@ -198,16 +201,18 @@ class model:
     def train(self, num_epochs, trainloader, valloader=None, epochs_per_save=10):
         print("Start training")
         start_train_time = time.time()
-        for epoch in range(num_epochs):  # loop over the dataset multiple times
+        for epoch in range(self.epoch,num_epochs):  # loop over the dataset multiple times # adds that aaafter loadndigng the epochs will start for the last one
             start_epoch_time = time.time()
             self.epoch = epoch
             running_loss = []
             running_accuracy = []
             for i, sample in enumerate(trainloader, 0):
+                # print(i)
                 if isinstance(sample, dict):
-                    mfcc = sample['mfcc']
-                    stft = sample['stft']
-                    labels = sample['ground_truth']
+                    # reshape because we entered batch as one sample
+                    mfcc = sample['mfcc'].reshape(-1,1,351)
+                    stft = sample['stft'].reshape(-1,1,2313)
+                    labels = sample['ground_truth'].reshape(-1,1,257)
                 else:
                     inputs, labels = sample
 
@@ -232,6 +237,8 @@ class model:
                 if self.accuracy is not None:
                     # for accuracy per epoch
                     running_accuracy.append(self.accuracy(outputs.cpu().data, labels.cpu().data))
+                    if i%10 == 0 :
+                        print('tmp accuracy {} in i = {} in epoch {}'.format(np.mean(running_accuracy),i,epoch))
             validation_accuracy = self.test_validation(valloader)
             self.print_epoch_statistics(epoch, int(time.time() - start_epoch_time), running_loss, running_accuracy, validation_accuracy, )
             if epoch % epochs_per_save == 0:
@@ -248,6 +255,11 @@ def MyMse(outputs, labels):
 def argmax(predict, labels): #TODO: not working yet.. need to change it
     pred = predict.data.max(1)[1].long()
     return float(pred.eq(labels.data.view_as(pred).long()).sum()) / float(pred.shape[0])
+
+def count_success(predict, labels):
+    pred = np.array(([predict > 0.5] * 1)[0], dtype='float')
+    a = pred.flatten()==labels.view(-1).numpy()
+    return int(a.sum())/a.shape[0]
 
 if __name__ == '__main__':
 
