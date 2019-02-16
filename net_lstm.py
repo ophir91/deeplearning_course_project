@@ -22,7 +22,7 @@ class LSTMClassifaierAndDenoise(nn.Module):
     def forward(self, stft, mfcc):
         N = mfcc.shape[0]  # number of frames
         c = self.classifier(mfcc)
-        d = torch.zeros(self.M, N, 257)
+        d = torch.zeros(self.M, N, 257).cuda()
         for i, one_denoise in enumerate(self.MDenoise):
             one_denoise_output = one_denoise(stft)
             d[i, :, :] = one_denoise_output
@@ -41,21 +41,23 @@ class LSTMblock(nn.Module):
 
         # The LSTM takes stft as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
-        self.lstm = nn.LSTM(input_dim, hidden_dim,num_layers=num_of_deep_lstm)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers=num_of_deep_lstm)
 
         # The linear layer that maps from hidden state space to output space
         self.hidden2out = nn.Linear(hidden_dim, output_size)
-        self.hidden = self.init_hidden()
+        # self.hidden = self.init_hidden()
 
     def init_hidden(self):
         # Before we've done anything, we dont have any hidden state.
         # Refer to the Pytorch documentation to see exactly
         # why they have this dimensionality.
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
-        return (torch.zeros(1, 1, self.hidden_dim),
-                torch.zeros(1, 1, self.hidden_dim))
+        # return torch.zeros(1, 1, self.hidden_dim)
+        return (torch.zeros(1, 1, self.hidden_dim).cuda(),
+                torch.zeros(1, 1, self.hidden_dim).cuda())
 
     def forward(self, stft):
+        self.hidden = self.init_hidden()
         lstm_out, self.hidden = self.lstm(
             stft.view(len(stft), 1, -1), self.hidden)
         out_space = self.hidden2out(lstm_out.view(len(stft), -1))
