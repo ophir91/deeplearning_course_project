@@ -176,9 +176,14 @@ class model:
             with torch.no_grad():
                 for k, sample in enumerate(validationloader, 0):
                     if isinstance(sample, dict):
-                        valid_mfcc = sample['mfcc'].reshape(-1, 1, 351)
-                        valid_stft = sample['stft'].reshape(-1, 1, 2313)
-                        valid_labels = sample['ground_truth'].reshape(-1, 1, 257)
+                        if self.model_name == 'LSTMClassifaierAndDenoise':
+                            valid_mfcc = sample['mfcc'].reshape(-1, 1, 39)
+                            valid_stft = sample['stft'].reshape(-1, 1, 257)
+                            valid_labels = sample['ground_truth'].reshape(-1, 257)
+                        else:
+                            valid_mfcc = sample['mfcc'].reshape(-1, 1, 351)
+                            valid_stft = sample['stft'].reshape(-1, 1, 2313)
+                            valid_labels = sample['ground_truth'].reshape(-1, 1, 257)
                     else:
                         valid_mfcc, valid_stft, valid_labels = sample
 
@@ -212,12 +217,12 @@ class model:
                     if self.model_name =='LSTMClassifaierAndDenoise':
                         mfcc = sample['mfcc'].reshape(-1, 1, 39)
                         stft = sample['stft'].reshape(-1, 1, 257)
-                        labels = sample['ground_truth'].reshape(-1, 1, 257)
+                        labels = sample['ground_truth'].reshape(-1, 257)
                     else:
                         # reshape because we entered batch as one sample
                         mfcc = sample['mfcc'].reshape(-1,1,351)
                         stft = sample['stft'].reshape(-1,1,2313)
-                        labels = sample['ground_truth'].reshape(-1,1,257)
+                        labels = sample['ground_truth'].reshape(-1, 1,257)
                 else:
                     inputs, labels = sample
 
@@ -230,14 +235,13 @@ class model:
                 # forward + backward + optimize
                 outputs = self.model(stft, mfcc).cuda()
                 loss = self.criterion(outputs, labels)
-
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
-
-                if i >0:
-                    loss.backward()
-                else:
-                    loss.backward(retain_graph=True)
+                loss.backward()
+                # if i >0:
+                #     loss.backward()
+                # else:
+                #     loss.backward(retain_graph=True)
                 self.optimizer.step()
 
                 # for loss per epoch
