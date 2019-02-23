@@ -10,7 +10,7 @@ class MyDataset(Dataset):  # TODO: need to write the data loader
         # self.stft_path = stft_path
         # self.map_path = map_path
         self.main_path = main_path
-        self.files_names = os.listdir(self.main_path)
+        self.files_names = os.listdir(self.main_path)[:2500]
         pass
 
     def __len__(self):

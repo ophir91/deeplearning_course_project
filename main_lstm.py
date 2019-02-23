@@ -34,7 +34,7 @@ main_path_val = os.path.join(root_path, 'TEST')
 valid_data = MyDataset(main_path_val)
 validloader = DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=0)
 
-my_model = model(package_name=package_name, model_name=model_name, args=model_arg, description='3_LSTM_39_experts')
+my_model = model(package_name=package_name, model_name=model_name, args=model_arg, description='3_LSTM_39_experts', model_path = 'saved_models/Feb20_17-55_LSTMClassifaierAndDenoise_3_LSTM_39_experts_0_Adam_BCELoss.pth.tar')
 my_model.fit(loss='BCELoss', accuracy_name='count_success', optimizer_name=optimazier, lr=lr)
 # my_model.print_summary()
 # my_model.model.double()
